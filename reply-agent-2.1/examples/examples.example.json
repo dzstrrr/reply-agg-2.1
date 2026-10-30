@@ -1,0 +1,49 @@
+{
+  "_comment": "Reply Agent — examples file. Two shapes accepted (delete this comment before importing).",
+  "_shape_1": "Per-style file: { style: 'chill', examples: [{post, reply}, ...] }",
+  "_shape_2": "All-in-one file: { 'chill': [{post, reply}, ...], 'smart': [...] } — keys match style names.",
+
+  "chill": [
+    {
+      "post": "Just shipped my first SaaS after 6 months of nights and weekends 🚀",
+      "reply": "noice, what's it do"
+    },
+    {
+      "post": "Hot take: most productivity advice is for people who don't have actual work to do.",
+      "reply": "yep. the people writing it are the proof"
+    }
+  ],
+
+  "smart": [
+    {
+      "post": "Why does every startup blog post sound the same?",
+      "reply": "Because they're optimizing for the same SEO playbook. The format is the product."
+    },
+    {
+      "post": "AI is going to replace junior developers within 2 years.",
+      "reply": "It'll replace the work juniors used to do. Whether companies still hire juniors to grow into seniors is a separate question, and the more interesting one."
+    }
+    
+  ],
+
+  "provocative": [
+    {
+      "post": "Working 80 hours a week is the only way to win.",
+      "reply": "Or it's the only way you know. Different thing."
+    }
+  ],
+
+  "funny": [
+    {
+      "post": "I asked ChatGPT to plan my wedding and it did a better job than the planner I paid $3000.",
+      "reply": "the planner is currently asking ChatGPT how to refund you"
+    }
+  ],
+
+  "alpha": [
+    {
+      "post": "Should I learn React or Vue in 2026?",
+      "reply": "React. Don't overthink it. Ship something this week."
+    }
+  ]
+}

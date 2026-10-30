@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Reply Agent</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="hdr">
+      <div class="logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 L14 8 L20 10 L14 12 L12 18 L10 12 L4 10 L10 8 Z" />
+        </svg>
+        <span>reply<em>·</em>agent</span>
+      </div>
+      <div class="hdr-right">
+        <span class="hdr-meta" id="hdr-meta">—</span>
+        <button class="hdr-open" id="open-window" title="Open in separate window so it doesn't close when you click away">↗</button>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab is-active" data-tab="styles">Styles</button>
+      <button class="tab" data-tab="forbidden">Forbidden</button>
+      <button class="tab" data-tab="log">Log</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </nav>
+
+    <main>
+      <!-- STYLES -->
+      <section class="panel is-active" data-panel="styles">
+        <div class="panel-head">
+          <div>
+            <h2>Styles</h2>
+            <p class="sub">Name on the button. Prompt is how to write a reply in this style.</p>
+          </div>
+          <button class="btn btn-ghost" id="add-style">+ New style</button>
+        </div>
+        <div class="card" id="active-style-card">
+          <label class="field">
+            <span class="label">Active style in this browser</span>
+            <select id="active-style" class="input"></select>
+            <span class="hint">Locked to this Chrome profile only — nothing is synced. RA then generates instantly instead of showing the picker.</span>
+          </label>
+        </div>
+        <div id="styles-list" class="stack"></div>
+      </section>
+
+      <!-- FORBIDDEN -->
+      <section class="panel" data-panel="forbidden">
+        <div class="panel-head">
+          <div>
+            <h2>Forbidden words</h2>
+            <p class="sub">Global block list. Per-style lists live inside each style card.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="chips" id="forbidden-chips"></div>
+          <div class="row">
+            <input id="forbidden-input" class="input" placeholder="Add a word and press Enter" />
+          </div>
+        </div>
+      </section>
+
+      <!-- LOG -->
+      <section class="panel" data-panel="log">
+        <div class="panel-head">
+          <div>
+            <h2>Reply log</h2>
+            <p class="sub">Every generation, locally. See what worked.</p>
+          </div>
+          <div class="row gap">
+            <button class="btn btn-ghost" id="export-log">Export JSON</button>
+            <button class="btn btn-ghost danger" id="clear-log">Clear</button>
+          </div>
+        </div>
+        <div class="card subtle" id="usage-card">
+          <span class="label small">Token usage (this log)</span>
+          <div id="usage-body" class="muted">—</div>
+        </div>
+        <div id="log-list" class="stack"></div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="panel" data-panel="settings">
+        <div class="panel-head">
+          <h2>Settings</h2>
+        </div>
+        <div class="card">
+          <label class="field">
+            <span class="label">Anthropic API key</span>
+            <input id="api-key" type="password" class="input mono" placeholder="sk-ant-..." />
+            <span class="hint">Stored locally in this browser. Goes only to api.anthropic.com.</span>
+          </label>
+          <label class="field">
+            <span class="label">API endpoint</span>
+            <input id="endpoint" class="input mono" placeholder="blank = call api.anthropic.com directly" />
+            <span class="hint">Your Worker URL. Needed when the profile sits behind a proxy Anthropic answers with 403.</span>
+          </label>
+          <label class="field">
+            <span class="label">Gateway token</span>
+            <input id="gateway-token" type="password" class="input mono" placeholder="only with a gateway" />
+          </label>
+          <label class="field">
+            <span class="label">Model</span>
+            <input id="model" class="input mono" placeholder="claude-haiku-4-5" />
+          </label>
+          <label class="field">
+            <span class="label">Default length</span>
+            <select id="default-length" class="input">
+              <option value="short">short — 2–6 words</option>
+              <option value="normal">normal — 1–2 short sentences</option>
+              <option value="long">long — up to 280 characters</option>
+            </select>
+          </label>
+          <label class="field">
+            <span class="label">Ukrainian translation under each variant</span>
+            <select id="include-uk" class="input">
+              <option value="0">Off — cheaper (≈ half the output tokens)</option>
+              <option value="1">On</option>
+            </select>
+          </label>
+          <label class="field">
+            <span class="label">Reply language</span>
+            <select id="language" class="input">
+              <option value="auto">Match the post</option>
+              <option value="uk">Ukrainian</option>
+              <option value="en">English</option>
+            </select>
+          </label>
+          <div class="row right">
+            <span id="settings-saved" class="muted"></span>
+            <button class="btn" id="save-settings">Save</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- STYLE EDITOR (modal) -->
+    <div class="modal" id="style-modal" hidden>
+      <div class="modal-card">
+        <header class="modal-head">
+          <h3 id="style-modal-title">Edit style</h3>
+          <button class="btn-icon" id="style-modal-close" aria-label="Close">×</button>
+        </header>
+        <div class="modal-body">
+          <label class="field">
+            <span class="label">Name (button label)</span>
+            <input id="style-name" class="input" placeholder="e.g. chill" />
+          </label>
+          <label class="field">
+            <span class="label">Prompt</span>
+            <textarea id="style-prompt" class="input" rows="3" placeholder="e.g. casual, relaxed, low-energy"></textarea>
+          </label>
+          <div class="field">
+            <span class="label">Forbidden words (this style)</span>
+            <div class="card subtle">
+              <div class="chips" id="style-forbidden-chips"></div>
+              <input id="style-forbidden-input" class="input" placeholder="Add and press Enter" />
+            </div>
+          </div>
+          <div class="field">
+            <span class="label">Examples (post → reply pairs)</span>
+            <div class="row gap">
+              <button class="btn btn-ghost" id="import-examples">Import JSON</button>
+              <button class="btn btn-ghost" id="clear-examples">Clear all</button>
+              <span class="muted" id="examples-count">0 examples</span>
+            </div>
+            <input id="examples-file" type="file" accept=".json" hidden />
+            <div id="examples-list" class="stack tight"></div>
+            <div class="card subtle">
+              <span class="label small">Add one manually</span>
+              <textarea id="example-post" class="input" rows="2" placeholder="Post text"></textarea>
+              <textarea id="example-reply" class="input" rows="2" placeholder="Your reply"></textarea>
+              <div class="row right">
+                <button class="btn btn-ghost" id="add-example">Add example</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="modal-foot">
+          <button class="btn btn-ghost danger" id="style-delete">Delete style</button>
+          <div class="row gap">
+            <button class="btn btn-ghost" id="style-cancel">Cancel</button>
+            <button class="btn" id="style-save">Save</button>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <!-- LOG ENTRY (modal) -->
+    <div class="modal" id="log-modal" hidden>
+      <div class="modal-card">
+        <header class="modal-head">
+          <h3>Log entry</h3>
+          <button class="btn-icon" id="log-modal-close" aria-label="Close">×</button>
+        </header>
+        <div class="modal-body" id="log-modal-body"></div>
+      </div>
+    </div>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

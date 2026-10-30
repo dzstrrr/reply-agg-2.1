@@ -1,0 +1,15 @@
+name = "reply-agent-gateway"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+# Optional per-token daily cap. Uncomment both blocks and create the
+# namespace first:   npx wrangler kv namespace create RA_KV
+#
+# [vars]
+# RA_DAILY_LIMIT = "300"
+#
+# [[kv_namespaces]]
+# binding = "RA_KV"
+# id = "<id printed by the command above>"
+[placement]
+region = "aws:us-east-1"
